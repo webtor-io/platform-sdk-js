@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+service Magnet2Torrent {
+  // Converts magnet uri to torrent file
+  rpc Magnet2Torrent (Magnet2TorrentRequest) returns (Magnet2TorrentReply) {}
+}
+
+// The request message containing the magnet url
+message Magnet2TorrentRequest {
+  string magnet = 1;
+}
+
+// The response message containing the torrent
+message Magnet2TorrentReply {
+  bytes torrent = 1;
+}

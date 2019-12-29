@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+service AbuseStore {
+  // Pushes abuse to the store
+  rpc Push (PushRequest) returns (PushReply) {}
+
+  // Check abuse in the store for existence
+  rpc Check (CheckRequest) returns (CheckReply) {}
+}
+
+// The push response message containing
+message PushReply {
+}
+
+// The push request message
+message PushRequest {
+  string notice_id   = 1;
+  string infohash    = 2;
+  string filename    = 3;
+  string work        = 4;
+  int64  started_at  = 5;
+  string email       = 6;
+  string description = 7;
+  string subject     = 8;
+  enum Cause {
+    ILLEGAL_CONTENT = 0;
+    MALWARE         = 1;
+    APP_ERROR       = 2;
+    QUESTION        = 3;
+  }
+  Cause cause        = 9;
+  enum Source {
+    MAIL = 0;
+    FORM = 1;
+  }
+  Source source      = 10;
+}
+
+// The check request message containing the infoHash
+message CheckRequest {
+  string infohash = 1;
+}
+
+// The check response message containing existance flag
+message CheckReply {
+  bool exists = 1;
+}
