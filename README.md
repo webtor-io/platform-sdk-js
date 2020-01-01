@@ -55,3 +55,4 @@ seeder.stats(filePath, (path, data) => {
   console.log(data);
 });
 ```
+You can find fully working example [here](https://github.com/webtor-io/platform-sdk-js/tree/master/example)!
