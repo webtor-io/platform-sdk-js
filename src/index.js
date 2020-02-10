@@ -4,6 +4,7 @@ import magnet from './sdk/magnet';
 import abuse from './sdk/abuse';
 import seeder from './sdk/seeder';
 import util from './sdk/util';
+import ext from './sdk/ext';
 
 const defaultParams = {
     grpcDebug: false,
@@ -32,6 +33,7 @@ function sdk(params = {}) {
 
     sdk = Object.assign(sdk, {
         seeder:  seeder(params, sdk),
+        ext:     ext(params, sdk),
         magnet:  magnet(params, sdk),
         torrent: torrent(params, sdk),
         abuse:   abuse(params, sdk),

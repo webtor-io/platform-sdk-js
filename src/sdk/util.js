@@ -1,4 +1,5 @@
 const path = require('path');
+const Url = require('url-parse');
 import mime from 'mime';
 
 export default function() {
@@ -32,5 +33,82 @@ export default function() {
             const ext = path.extname(url.pathname);
             return mime.getType(ext);
         },
+        cloneUrl(url) {
+            return new Url(url.toString());
+        },
+        vttUrl(url) {
+            url = this.cloneUrl(url);
+            url.set('pathname', url.pathname + '~vtt');
+            return url;
+        },
+        hlsUrl(url, viewSettings = {}, playlist) {
+            url = this.cloneUrl(url);
+            let extra = '';
+            if (viewSettings.a) {
+                extra += 'a' + viewSettings.a;
+            }
+            if (viewSettings.s) {
+                extra += 's' + viewSettings.s;
+            }
+            if (extra) extra = ':' + extra;
+            url.set('pathname', url.pathname + '~hls' + extra + '/' + playlist);
+            return url;
+        },
+        viUrl(url, path) {
+            url = this.cloneUrl(url);
+            url.set('pathname', url.pathname + '~vi' + path);
+            return url;
+        },
+        streamUrl(url, viewSettings = {}) {
+            url = this.cloneUrl(url);
+            const deliveryType = this.getDeliveryType(url.pathname);
+            const mediaType = this.getMediaType(url.pathname);
+            if (deliveryType == 'transcode') {
+                if (mediaType == 'subtitle') {
+                    url = this.vttUrl(url);
+                } else {
+                    url = this.hlsUrl(url, viewSettings, 'index.m3u8');
+                }
+            }
+            return url;
+        },
+        streamSubtitleUrl(url, viewSettings = {}) {
+            url = this.cloneUrl(url);
+            const deliveryType = this.getDeliveryType(url.pathname);
+            const mediaType = this.getMediaType(url.pathname);
+            if (mediaType != 'video' || deliveryType != 'transcode') return;
+            return this.hlsUrl(url, viewSettings, 'index_vtt.m3u8');
+        },
+
+        async mediaInfo(url, viewSettings = {}) {
+            url = this.cloneUrl(url);
+            const deliveryType = this.getDeliveryType(url.pathname);
+            const mediaType = this.getMediaType(url.pathname);
+            if (deliveryType == 'webseed' || mediaType == 'subtitle') return {};
+            url = this.hlsUrl(url, viewSettings, 'index.json');
+            const res = await(fetch(url));
+            const mediaInfo = await res.json();
+            return mediaInfo;
+        },
+        async openSubtitles(url) {
+            url = this.cloneUrl(url);
+            const mediaType = this.getMediaType(url.pathname);
+            if (mediaType != 'video') return {};
+            const subtitlesUrl = this.viUrl(url, '/subtitles.json');
+            const res = await(fetch(subtitlesUrl));
+            const data = await res.json();
+
+            for (const k in data) {
+                const format = data[k].format; 
+                if (format != 'srt' && format != 'vtt') continue;
+                let src = data[k].src;
+                let sUrl = this.viUrl(url, src);
+                if (format != 'vtt') {
+                    sUrl = this.vttUrl(sUrl);
+                }
+                data[k].src = sUrl
+            }
+            return data;
+        }
     };
 }

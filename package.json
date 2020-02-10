@@ -10,6 +10,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
+    "watch": "webpack --watch",
     "protoc": "ls proto/ | xargs -I{} protoc --plugin='protoc-gen-ts=./node_modules/.bin/protoc-gen-ts' --js_out='import_style=commonjs_strict,binary:.' --ts_out='service=grpc-web:.' ./proto/{}/{}.proto"
   },
   "files": [
@@ -42,6 +43,7 @@
     "lodash": "^4.17.15",
     "mime": "^2.4.4",
     "parse-torrent": "^7.0.1",
+    "path-parse": "^1.0.6",
     "url-parse": "^1.4.7"
   }
 }
