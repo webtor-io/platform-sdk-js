@@ -4,8 +4,10 @@ SDK for online torrent streaming
 ## Features
 1. Online torrent content streaming without waiting for full download
 2. On-the-fly content transcoding
-3. Downloading torrent as ZIP-archive (coming soon)
-4. Subtitle transcoding, srt to vtt (coming soon)
+3. Downloading torrent as ZIP-archive
+4. Subtitle transcoding, srt to vtt
+5. OpenSubtitles support 
+6. Streaming of external resources (including transcoding)
 
 ## Supported formats
 * Video: avi, mkv, mp4, webm, m4v
@@ -93,7 +95,11 @@ Fetches parsed torrent by magnet-uri.
 ### `const seeder = sdk.seeder.get(infoHash)`
 Returns seeder instance for the specific torrent stored in torrent-store.
 
-### `seeder.streamUrl(path, viewSettings = {})`
+### `seeder.url(path)`
+Returns `url` for original source file.
+
+### <a name="seeder-stream-url">`seeder.streamUrl(path, viewSettings = {})`</a>
+Returns url capable for web-streaming.
 `viewSettings` should be provided only in case of content trnascoding.
 Possible `viewSettings`:
 ```
@@ -102,11 +108,29 @@ Possible `viewSettings`:
   s: Number,   // Selected subtitle channel
 }
 ```
-### `seeder.mediaInfo(path)`
+
+### <a name="seeder-stream-subtitle-url">`seeder.streamSubtitleUrl(path, viewSettings = {})`</a>
+Returns subtitle-url capable for web-streaming. Can be used only for hls-transcoded content.
+`viewSettings` should be provided only in case of content trnascoding.
+Possible `viewSettings`:
+```
+{
+  a: Number,   // Selected audio channel
+  s: Number,   // Selected subtitle channel
+}
+```
+
+### <a name="seeder-media-info">`seeder.mediaInfo(path)`</a>
 Returns FFmpeg probing data. If content should not be transcoded only empty object `{}` will be returned.
 
 ### `seeder.downloadUrl(path)`
 Returns download url.
+
+### `seeder.zipUrl(path)`
+Returns download url of zip-archive. Generates zip-archive of all files under directory and subdirectories specified by the `path`.
+
+### <a name="seeder-opensubtitles">`seeder.openSubtitles(path)`</a>
+Returns object that includes all subtitles from [OpenSubtitles.org](https://opensubtitles.org). Automatically generates streaming urls for every subtitle (srt => vtt encoding).
 
 ### `const statClient = seeder.stats(path, function(path, data) { ... })`
 Receives status of specific file. Possible data:
@@ -122,3 +146,18 @@ Also returns instance of stat client.
 
 ### `statClient.close()`
 Closes stat client
+
+### `sdk.ext.url(url)`
+Returns `url` for original external file proxied by the api. Can resolve CORS-issues.
+
+### `sdk.ext.streamUrl(url, viewSettings = {})`
+Same as [`seeder.streamUrl`](#seeder-stream-url) but for external resource.
+
+### `sdk.ext.streamSubtitleUrl(url, viewSettings = {})`
+Same as [`seeder.streamSubtitleUrl`](#seeder-stream-subtitle-url) but for external resource.
+
+### `sdk.ext.mediaInfo(url)`
+Same as [`seeder.mediaInfo`](#seeder-media-info) but for external resource.
+
+### `sdk.ext.openSubtitles(url)`
+Same as [`seeder.openSubtitles`](#seeder-opensubtitles) but for external resource.
