@@ -59,7 +59,7 @@ seeder.stats(filePath, (path, data) => {
 ```
 You can find fully working example [here](https://github.com/webtor-io/platform-sdk-js/tree/master/example)!
 
-## API
+## Initialization
 
 ### `const sdk = webtor(options)`
 
@@ -77,6 +77,9 @@ You can find fully working example [here](https://github.com/webtor-io/platform-
 }
 ```
 
+## sdk.torrent
+Provides functions for storing and retriving torrent-files.
+
 ### `sdk.torrent.fromUrl(url)`
 Fetches parsed torrent from specific url. Be sure that appropriate CORS-headers are set on server-side in case of cross-site request (`Access-Control-Allow-Origin: *`). 
 
@@ -89,8 +92,14 @@ Pushes parsed torrent to torrent-store with specific expiration time in seconds.
 ### `sdk.torrent.touch(torrent, expire)`
 Just renews expiration date of torrent-file.
 
+## sdk.magnet
+Provides functions for working with magnet-urls.
+
 ### `sdk.magnet.fetchTorrent(magnet)`
 Fetches parsed torrent by magnet-uri.
+
+## sdk.seeder
+Provides functions for retriving and streaming torrent-content.
 
 ### `const seeder = sdk.seeder.get(infoHash)`
 Returns seeder instance for the specific torrent stored in torrent-store.
@@ -146,6 +155,9 @@ Also returns instance of stat client.
 
 ### `statClient.close()`
 Closes stat client
+
+## sdk.ext
+Provides functions for retriving and streaming external resources.
 
 ### `sdk.ext.url(url)`
 Returns `url` for original external file proxied by the api. Can resolve CORS-issues.
