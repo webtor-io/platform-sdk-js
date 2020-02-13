@@ -14,6 +14,7 @@ export default function(params, sdk) {
             const query = metadata;
             const token = await params.getToken();
             if (token) query.token = token;
+            if (params.apiKey) query["api-key"] = params.apiKey;
             url.set('query', query);
             return url;
         },

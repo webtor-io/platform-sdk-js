@@ -4,6 +4,7 @@ const debug = require('debug')('webtor:sdk');
 
 export default async function(client, request, onMessage, onEnd, metadata = {}, params = {}) {
     metadata['token'] = await params.getToken();
+    metadata['api-key'] = params.apiKey;
     return new Promise(function(resolve, reject) {
         if (onMessage) {
             client.onMessage((message) => {

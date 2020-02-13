@@ -1,6 +1,6 @@
 {
   "name": "@webtor/platform-sdk-js",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "SDK for online torrent streaming",
   "main": "dist/index.js",
   "repository": {

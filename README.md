@@ -68,6 +68,7 @@ You can find fully working example [here](https://github.com/webtor-io/platform-
 ```
 {
   apiUrl: String,              // API url (required)
+  apiKey: String,              // API key
   downloadUrl: String,         // All download urls will contain this location
   tokenUrl: String,            // API will get access-token from this location
   tokenRenewInterval: Number,  // Renews access-token after specific period in ms
