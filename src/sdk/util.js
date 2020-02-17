@@ -1,5 +1,6 @@
 const path = require('path');
 const Url = require('url-parse');
+import ISO6391 from 'iso-639-1';
 import mime from 'mime';
 
 export default function() {
@@ -32,6 +33,13 @@ export default function() {
         getMimeType(url) {
             const ext = path.extname(url.pathname);
             return mime.getType(ext);
+        },
+        getSubtitleSrcLang(name) {
+            const baseName = path.basename(name, path.extname(name));
+            for (const code of ISO6391.getAllCodes()) {
+                if (baseName.endsWith('.' + code)) return code;
+            }
+            return false;
         },
         cloneUrl(url) {
             return new Url(url.toString());

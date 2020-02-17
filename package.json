@@ -1,6 +1,6 @@
 {
   "name": "@webtor/platform-sdk-js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "SDK for online torrent streaming",
   "main": "dist/index.js",
   "repository": {
@@ -40,6 +40,7 @@
     "@improbable-eng/grpc-web": "^0.12.0",
     "debug": "^4.1.1",
     "google-protobuf": "^3.11.2",
+    "iso-639-1": "^2.1.0",
     "lodash": "^4.17.15",
     "mime": "^2.4.4",
     "parse-torrent": "^7.0.1",
