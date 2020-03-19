@@ -41,6 +41,18 @@ export default function() {
             }
             return false;
         },
+        getSubtitleLang(name) {
+            const code = this.getSubtitleSrcLang(name);
+            if (code == false) return false;
+            return this.getLang(code);
+        },
+        getLang(code) {
+            return {
+                code,
+                name: ISO6391.getName(code),
+                nativeName: ISO6391.getNativeName(code),
+            };
+        },
         cloneUrl(url) {
             return new Url(url.toString());
         },
