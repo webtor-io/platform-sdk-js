@@ -3,8 +3,19 @@ const Url = require('url-parse');
 import ISO6391 from 'iso-639-1';
 import mime from 'mime';
 
-export default function() {
+export default function(params, sdk) {
+    const self = {params, sdk};
     return {
+        async makeQuery(metadata = {}, params = {}) {
+            params = Object.assign(self.params, params);
+            metadata = Object.assign({}, metadata);
+            const query = metadata;
+            const token = await params.getToken();
+            if (token) query.token = token;
+            if (params.apiKey) query["api-key"] = params.apiKey;
+            return query;
+        },
+
         getDeliveryType(file) {
             if (!file) return;
             const ext = path.extname(file);

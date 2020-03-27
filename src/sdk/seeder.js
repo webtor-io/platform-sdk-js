@@ -14,10 +14,7 @@ class WebSeeder {
         const url = new Url(params.apiUrl);
         const pathname = '/' + this.infoHash + '/' + encodeURIComponent(path);
         url.set('pathname', pathname);
-        const query = metadata;
-        const token = await params.getToken();
-        if (token) query.token = token;
-        if (params.apiKey) query["api-key"] = params.apiKey;
+        const query = await this.sdk.util.makeQuery(metadata, params);
         url.set('query', query);
         return url;
     }
