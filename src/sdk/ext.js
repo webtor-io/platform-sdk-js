@@ -11,7 +11,7 @@ export default function(params, sdk) {
             const encodedUrl = encodeURIComponent(btoa(extUrl));
             const pathname = '/ext/' + encodedUrl + '/' + fileName;
             url.set('pathname', pathname);
-            const query = await this.sdk.util.makeQuery(metadata, params);
+            const query = await self.sdk.util.makeQuery(metadata, params);
             url.set('query', query);
             return url;
         },
