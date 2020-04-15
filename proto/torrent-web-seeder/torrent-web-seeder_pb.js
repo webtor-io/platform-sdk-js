@@ -16,6 +16,7 @@ goog.exportSymbol('File', null, proto);
 goog.exportSymbol('FilesReply', null, proto);
 goog.exportSymbol('FilesRequest', null, proto);
 goog.exportSymbol('Piece', null, proto);
+goog.exportSymbol('Piece.Priority', null, proto);
 goog.exportSymbol('StatReply', null, proto);
 goog.exportSymbol('StatReply.Status', null, proto);
 goog.exportSymbol('StatRequest', null, proto);
@@ -319,7 +320,9 @@ proto.StatReply.toObject = function(includeInstance, msg) {
     peers: jspb.Message.getFieldWithDefault(msg, 3, 0),
     status: jspb.Message.getFieldWithDefault(msg, 4, 0),
     piecesList: jspb.Message.toObjectList(msg.getPiecesList(),
-    proto.Piece.toObject, includeInstance)
+    proto.Piece.toObject, includeInstance),
+    seeders: jspb.Message.getFieldWithDefault(msg, 6, 0),
+    leechers: jspb.Message.getFieldWithDefault(msg, 7, 0)
   };
 
   if (includeInstance) {
@@ -376,6 +379,14 @@ proto.StatReply.deserializeBinaryFromReader = function(msg, reader) {
       var value = new proto.Piece;
       reader.readMessage(value,proto.Piece.deserializeBinaryFromReader);
       msg.addPieces(value);
+      break;
+    case 6:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setSeeders(value);
+      break;
+    case 7:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setLeechers(value);
       break;
     default:
       reader.skipField();
@@ -442,6 +453,20 @@ proto.StatReply.serializeBinaryToWriter = function(message, writer) {
       proto.Piece.serializeBinaryToWriter
     );
   }
+  f = message.getSeeders();
+  if (f !== 0) {
+    writer.writeInt32(
+      6,
+      f
+    );
+  }
+  f = message.getLeechers();
+  if (f !== 0) {
+    writer.writeInt32(
+      7,
+      f
+    );
+  }
 };
 
 
@@ -453,7 +478,9 @@ proto.StatReply.Status = {
   SEEDING: 1,
   IDLE: 2,
   TERMINATED: 3,
-  WAITING_FOR_PEERS: 4
+  WAITING_FOR_PEERS: 4,
+  RESTORING: 5,
+  BACKINGUP: 6
 };
 
 /**
@@ -566,6 +593,42 @@ proto.StatReply.prototype.clearPiecesList = function() {
 };
 
 
+/**
+ * optional int32 seeders = 6;
+ * @return {number}
+ */
+proto.StatReply.prototype.getSeeders = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.StatReply} returns this
+ */
+proto.StatReply.prototype.setSeeders = function(value) {
+  return jspb.Message.setProto3IntField(this, 6, value);
+};
+
+
+/**
+ * optional int32 leechers = 7;
+ * @return {number}
+ */
+proto.StatReply.prototype.getLeechers = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.StatReply} returns this
+ */
+proto.StatReply.prototype.setLeechers = function(value) {
+  return jspb.Message.setProto3IntField(this, 7, value);
+};
+
+
 
 
 
@@ -599,7 +662,8 @@ proto.Piece.prototype.toObject = function(opt_includeInstance) {
 proto.Piece.toObject = function(includeInstance, msg) {
   var f, obj = {
     position: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    complete: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+    complete: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+    priority: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -644,6 +708,10 @@ proto.Piece.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setComplete(value);
       break;
+    case 3:
+      var value = /** @type {!proto.Piece.Priority} */ (reader.readEnum());
+      msg.setPriority(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -687,8 +755,27 @@ proto.Piece.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getPriority();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      3,
+      f
+    );
+  }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.Piece.Priority = {
+  NONE: 0,
+  NORMAL: 1,
+  HIGH: 2,
+  READAHEAD: 3,
+  NEXT: 4,
+  NOW: 5
+};
 
 /**
  * optional int64 position = 1;
@@ -723,6 +810,24 @@ proto.Piece.prototype.getComplete = function() {
  */
 proto.Piece.prototype.setComplete = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
+};
+
+
+/**
+ * optional Priority priority = 3;
+ * @return {!proto.Piece.Priority}
+ */
+proto.Piece.prototype.getPriority = function() {
+  return /** @type {!proto.Piece.Priority} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {!proto.Piece.Priority} value
+ * @return {!proto.Piece} returns this
+ */
+proto.Piece.prototype.setPriority = function(value) {
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 

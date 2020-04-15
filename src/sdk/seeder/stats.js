@@ -46,7 +46,10 @@ class Stats {
             } else {
                 for (const p of message.piecesList) {
                     for (const m of map) {
-                        if (m.position == p.position) m.complete = p.complete;
+                        if (m.position == p.position) {
+                            m.complete = p.complete;
+                            m.priority = p.priority;
+                        }
                     }
                 }
                 message.piecesList = JSON.parse(JSON.stringify(map));
