@@ -35,7 +35,7 @@ export default function(params = {}) {
             debug('pull torrent infoHash=%s url=%s metadata=%o', infoHash, url, metadata);
             const request = new PullRequest();
             request.setInfohash(infoHash);
-            const client = grpc.client(TorrentStore.Pull, {
+            const client = () => grpc.client(TorrentStore.Pull, {
                 host:  url,
                 // transport: grpc.WebsocketTransport(),
                 debug: params.grpcDebug,
@@ -65,7 +65,7 @@ export default function(params = {}) {
             const request = new PushRequest();
             request.setTorrent(parseTorrent.toTorrentFile(torrent));
             request.setExpire(expire);
-            const client = grpc.client(TorrentStore.Push, {
+            const client = () => grpc.client(TorrentStore.Push, {
                 host:  url,
                 // transport: grpc.WebsocketTransport(),
                 debug: params.grpcDebug,
@@ -92,7 +92,7 @@ export default function(params = {}) {
             const request = new TouchRequest();
             request.setInfohash(torrent.infoHash);
             request.setExpire(expire);
-            const client = grpc.client(TorrentStore.Touch, {
+            const client = () => grpc.client(TorrentStore.Touch, {
                 host: url,
                 // transport: grpc.WebsocketTransport(),
                 debug: params.grpcDebug,

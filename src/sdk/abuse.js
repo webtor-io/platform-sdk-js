@@ -20,7 +20,7 @@ export default function(params = {}) {
             request.setWork(abuse.work);
             request.setCause(abuse.cause);
             request.setSource(PushRequest.Source.FORM);
-            const client = grpc.client(AbuseStore.Push, {
+            const client = () => grpc.client(AbuseStore.Push, {
                 host: url,
                 // transport: grpc.WebsocketTransport(),
                 debug: params.grpcDebug,

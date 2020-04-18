@@ -18,25 +18,18 @@ class Stats {
         debug('close stats url=%o path=%o', this.url, this.path);
         if (this.client) this.client.close();
     }
-    async start(onMessage, metadata, params) {
-
-        while(!this.closed) {
-            try {
-                return await this._start(onMessage, metadata, params);
-            } catch (e) {
-                debug('failed to get stats error=%o', e)
-                await (new Promise(resolve => setTimeout(resolve, params.statsRetryInterval)));
-            }
-        }
-    }
-    _start(onMessage, metadata, params) {
+    start(onMessage, metadata, params) {
         const request = new StatRequest();
         request.setPath(this.path);
-        this.client = grpc.client(TorrentWebSeeder.StatStream, {
-            host: this.url,
-            transport: grpc.WebsocketTransport(),
-            debug: params.grpcDebug,
-        });
+        const client = () => { 
+            const c = grpc.client(TorrentWebSeeder.StatStream, {
+                host: this.url,
+                transport: grpc.WebsocketTransport(),
+                debug: params.grpcDebug,
+            });
+            this.client = c;
+            return c;
+        };
         const statuses = _.invert(StatReply.Status);
         let map = null;
         const onMessageWrapper = (message) => {
@@ -66,7 +59,7 @@ class Stats {
             }
         }
 
-        return process(this.client, request, onMessageWrapper, onEnd, metadata, params);
+        return process(client, request, onMessageWrapper, onEnd, metadata, params);
     }
 }
 

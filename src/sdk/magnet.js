@@ -14,7 +14,7 @@ export default function(params = {}) {
             debug('fetch torrent magnet=%s url=%s metadata=%o', magnet, url, metadata);
             const request = new Magnet2TorrentRequest();
             request.setMagnet(magnet);
-            const client = grpc.client(Magnet2Torrent.Magnet2Torrent, {
+            const client = () => grpc.client(Magnet2Torrent.Magnet2Torrent, {
                 host:      url,
                 transport: grpc.WebsocketTransport(),
                 debug:     params.grpcDebug,
