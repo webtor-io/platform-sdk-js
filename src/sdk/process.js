@@ -5,6 +5,7 @@ const debug = require('debug')('webtor:sdk');
 export default async function(client, request, onMessage, onEnd, metadata = {}, params = {}) {
     metadata['token'] = await params.getToken();
     metadata['api-key'] = params.apiKey;
+    let retryCount = 0;
     return new Promise(function(resolve, reject) {
         function process() {
             const c = client();
@@ -16,9 +17,10 @@ export default async function(client, request, onMessage, onEnd, metadata = {}, 
             }
             if (onEnd) {
                 c.onEnd(async (res) => {
-                    if (res == grpc.Code.Unknown && params.grpcRetryInterval) {
-                        debug('failed to get process request error=%o retry', res);
-                        await (new Promise(resolve => setTimeout(resolve, params.grpcRetryInterval)));
+                    if (res == grpc.Code.Unknown && params.retryInterval && params.retryLimit > 0 && retryCount < params.retryLimit) {
+                        debug('failed to get process request error=%o retry count=%o', res, retryCount);
+                        await (new Promise(resolve => setTimeout(resolve, params.retryInterval)));
+                        retryCount++;
                         process();
                     } else {
                         onEnd(res, resolve, reject);

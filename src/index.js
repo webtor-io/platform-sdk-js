@@ -8,7 +8,8 @@ import ext from './sdk/ext';
 
 const defaultParams = {
     grpcDebug: false,
-    grpcRetryInterval: 1000,
+    retryInterval: 1000,
+    retryLimit: 3,
     async getToken() {
         return null;
     },
