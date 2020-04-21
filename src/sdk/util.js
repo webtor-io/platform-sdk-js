@@ -2,6 +2,23 @@ const path = require('path');
 const Url = require('url-parse');
 import ISO6391 from 'iso-639-1';
 import mime from 'mime';
+const debug = require('debug')('webtor:sdk:util');
+const debugFetch = function(url) {
+    debug('fetch url=%o', url.href);
+    return fetch(url);
+}
+const retryFetch = require('fetch-retry')(debugFetch, {
+    retries: 3,
+    retryDelay: function(attempt, error, response) {
+        return Math.pow(2, attempt) * 1000;
+    },
+    retryOn: function(attempt, error, response) {
+        if (error !== null || response.status >= 500) {
+            debug('got fetch error retry count=%o', attempt);
+            return true;
+        }
+    },
+});
 
 export default function(params, sdk) {
     const self = {params, sdk};
@@ -117,7 +134,7 @@ export default function(params, sdk) {
             const mediaType = this.getMediaType(url.pathname);
             if (deliveryType == 'webseed' || mediaType == 'subtitle') return {};
             url = this.hlsUrl(url, viewSettings, 'index.json');
-            const res = await(fetch(url));
+            const res = await(retryFetch(url));
             const mediaInfo = await res.json();
             return mediaInfo;
         },
@@ -126,7 +143,7 @@ export default function(params, sdk) {
             const mediaType = this.getMediaType(url.pathname);
             if (mediaType != 'video') return {};
             const subtitlesUrl = this.viUrl(url, '/subtitles.json');
-            const res = await(fetch(subtitlesUrl));
+            const res = await(retryFetch(subtitlesUrl));
             const data = await res.json();
 
             for (const k in data) {
