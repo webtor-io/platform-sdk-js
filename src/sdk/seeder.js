@@ -11,11 +11,12 @@ class WebSeeder {
 
     async url(path, metadata = {}, params = {}) {
         params = Object.assign(this.params, params);
-        const url = new Url(params.apiUrl);
+        let url = new Url(params.apiUrl);
         const pathname = '/' + this.infoHash + '/' + encodeURIComponent(path);
         url.set('pathname', pathname);
         const query = await this.sdk.util.makeQuery(metadata, params);
         url.set('query', query);
+        if (params.cache) url = this.sdk.util.tcUrl(url);
         return url;
     }
 

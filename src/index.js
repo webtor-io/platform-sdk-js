@@ -10,6 +10,7 @@ const defaultParams = {
     grpcDebug: false,
     retryInterval: 1000,
     retryLimit: 3,
+    cache: false,
     async getToken() {
         return null;
     },

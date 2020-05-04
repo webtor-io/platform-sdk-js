@@ -20,6 +20,10 @@ const retryFetch = require('fetch-retry')(debugFetch, {
     },
 });
 
+function cleanExt(ext) {
+    return ext.replace(/~[a-z0-9]+$/, '');
+}
+
 export default function(params, sdk) {
     const self = {params, sdk};
     return {
@@ -32,10 +36,10 @@ export default function(params, sdk) {
             if (params.apiKey) query["api-key"] = params.apiKey;
             return query;
         },
-
         getDeliveryType(file) {
             if (!file) return;
-            const ext = path.extname(file);
+            let ext = path.extname(file);
+            ext = cleanExt(ext);
             // Browser unsupported streaming formats
             if ('.avi .mkv .flac .m4a .m4v'.split(' ').includes(ext)) return 'transcode';
             // Browser supported streaming formats
@@ -48,7 +52,8 @@ export default function(params, sdk) {
         },
         getMediaType(file) {
             if (!file) return;
-            const ext = path.extname(file);
+            let ext = path.extname(file);
+            ext = cleanExt(ext);
             // Video
             if ('.avi .mkv .mp4 .webm .m4v'.split(' ').includes(ext)) return 'video';
             // Audio
@@ -87,6 +92,11 @@ export default function(params, sdk) {
         vttUrl(url) {
             url = this.cloneUrl(url);
             url.set('pathname', url.pathname + '~vtt');
+            return url;
+        },
+        tcUrl(url) {
+            url = this.cloneUrl(url);
+            url.set('pathname', url.pathname + '~tc');
             return url;
         },
         hlsUrl(url, viewSettings = {}, playlist) {
