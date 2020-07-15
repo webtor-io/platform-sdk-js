@@ -12,7 +12,7 @@ class WebSeeder {
     async url(path, metadata = {}, params = {}) {
         params = Object.assign(this.params, params);
         let url = new Url(params.apiUrl);
-        const pathname = '/' + this.infoHash + '/' + encodeURIComponent(path);
+        const pathname = '/' + this.infoHash + '/' + encodeURIComponent(path.replace(/^\//, ''));
         url.set('pathname', pathname);
         const query = await this.sdk.util.makeQuery(metadata, params);
         url.set('query', query);
@@ -30,9 +30,19 @@ class WebSeeder {
         return this.sdk.util.streamUrl(url, viewSettings);
     }
 
+    async pieceUrl(id, metadata = {}, params = {}) {
+        let url = await this.url('', metadata, params);
+        return this.sdk.util.pieceUrl(url, id);
+    }
+
     async mediaInfo(path, viewSettings = {}, metadata = {}, params = {}) {
         const url = await this.url(path, metadata, params);
         return await this.sdk.util.mediaInfo(url, viewSettings);
+    }
+
+    async completedPieces(viewSettings = {}, metadata = {}, params = {}) {
+        const url = await this.url('', metadata, params);
+        return await this.sdk.util.completedPieces(url);
     }
 
     async openSubtitles(path, metadata = {}, params = {}) {

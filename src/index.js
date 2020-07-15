@@ -3,6 +3,7 @@ import torrent from './sdk/torrent';
 import magnet from './sdk/magnet';
 import abuse from './sdk/abuse';
 import seeder from './sdk/seeder';
+import tracker from './sdk/tracker';
 import util from './sdk/util';
 import ext from './sdk/ext';
 
@@ -34,6 +35,8 @@ function sdk(params = {}) {
     let sdk = {};
 
     sdk = Object.assign(sdk, {
+        params,
+        tracker: tracker(params, sdk),
         seeder:  seeder(params, sdk),
         ext:     ext(params, sdk),
         magnet:  magnet(params, sdk),

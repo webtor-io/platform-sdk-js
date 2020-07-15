@@ -2,6 +2,7 @@ const path = require('path');
 const Url = require('url-parse');
 import ISO6391 from 'iso-639-1';
 import mime from 'mime';
+import { readSync } from 'fs';
 const debug = require('debug')('webtor:sdk:util');
 const debugFetch = function(url) {
     debug('fetch url=%o', url.href);
@@ -21,7 +22,10 @@ const retryFetch = require('fetch-retry')(debugFetch, {
 });
 
 function cleanExt(ext) {
-    return ext.replace(/~[a-z0-9]+$/, '');
+    return ext.toLowerCase().replace(/~[a-z0-9]+$/, '');
+}
+function buf2hex(buffer) { // buffer is an ArrayBuffer
+    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
 }
 
 export default function(params, sdk) {
@@ -94,6 +98,16 @@ export default function(params, sdk) {
             url.set('pathname', url.pathname + '~vtt');
             return url;
         },
+        completedPiecesUrl(url) {
+            url = this.cloneUrl(url);
+            url.set('pathname', url.pathname + '/completed_pieces');
+            return url;
+        },
+        pieceUrl(url, id) {
+            url = this.cloneUrl(url);
+            url.set('pathname', url.pathname + '/piece/' + id);
+            return url;
+        },
         tcUrl(url) {
             url = this.cloneUrl(url);
             url.set('pathname', url.pathname + '~tc');
@@ -138,6 +152,25 @@ export default function(params, sdk) {
             return this.hlsUrl(url, viewSettings, 'index_vtt.m3u8');
         },
 
+        async completedPieces(url, viewSettings = {}) {
+            url = this.cloneUrl(url);
+            url = this.completedPiecesUrl(url);
+            const res = await(retryFetch(url));
+            const buf = await res.arrayBuffer();
+            const byteArr = new Uint8Array(buf);
+            const hex = buf2hex(byteArr);
+            const pieces = [];
+            let p = '';
+            for (const c of hex) {
+                p += c;
+                if (p.length == 40) {
+                    pieces.push(p);
+                    p = '';
+                }
+            }
+            return pieces;
+        },
+
         async mediaInfo(url, viewSettings = {}) {
             url = this.cloneUrl(url);
             const deliveryType = this.getDeliveryType(url.pathname);
@@ -167,6 +200,28 @@ export default function(params, sdk) {
                 data[k].src = sUrl
             }
             return data;
-        }
+        },
+        async subdomainsUrl(metadata = {}, params = {}) {
+            params = Object.assign(self.params, params);
+            const url = new Url(params.apiUrl);
+            const pathname = '/subdomains.json';
+            url.set('pathname', pathname);
+            const query = await self.sdk.util.makeQuery(metadata, params);
+            url.set('query', query);
+            return url;
+        },
+        async subdomains(metadata = {}, params = {}) {
+            params = Object.assign(self.params, params);
+            const apiUrl = new Url(params.apiUrl);
+            const url = await this.subdomainsUrl(metadata, params);
+            // const pathname = '/subdomains.json';
+            const res = await(retryFetch(url));
+            const s = await res.json();
+            const rr = [];
+            for (const e of s) {
+                rr.push(e + '.'+ url.hostname);
+            }
+            return rr;
+        },
     };
 }

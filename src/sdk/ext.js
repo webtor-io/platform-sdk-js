@@ -17,7 +17,7 @@ export default function(params, sdk) {
         },
         async streamSubtitleUrl(extUrl, viewSettings = {}, metadata = {}, params = {}) {
             const url = await this.url(extUrl, metadata, params);
-            return this.sdk.util.streamSubtitleUrl(url, viewSettings);
+            return self.sdk.util.streamSubtitleUrl(url, viewSettings);
         },
         async streamUrl(extUrl, viewSettings = {}, metadata = {}, params = {}) {
             let url = await this.url(extUrl, metadata, params);
@@ -25,11 +25,11 @@ export default function(params, sdk) {
         },
         async mediaInfo(extUrl, viewSettings = {}, metadata = {}, params = {}) {
             const url = await this.url(extUrl, metadata, params);
-            return await this.sdk.util.mediaInfo(url, viewSettings);
+            return await self.sdk.util.mediaInfo(url, viewSettings);
         },
         async openSubtitles(extUrl, metadata = {}, params = {}) {
             const url = await this.url(extUrl, metadata, params);
-            return await this.sdk.util.openSubtitles(url);
+            return await self.sdk.util.openSubtitles(url);
         },
     };
 };

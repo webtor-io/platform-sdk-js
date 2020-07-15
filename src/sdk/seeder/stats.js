@@ -6,11 +6,11 @@ const debug = require('debug')('webtor:sdk:seeder:stats');
 import _ from 'lodash';
 
 class Stats {
-    closed = false;
-    client = null;
     constructor(url, path) {
         this.url = url;
         this.path = path;
+        this.closed = false;
+        this.client = null;
     }
     close() {
         if (this.closed) return;
