@@ -12,6 +12,7 @@ const defaultParams = {
     retryInterval: 1000,
     retryLimit: 3,
     cache: false,
+    vod: false,
     async getToken() {
         return null;
     },

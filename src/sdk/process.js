@@ -17,7 +17,7 @@ export default async function(client, request, onMessage, onEnd, metadata = {}, 
             }
             if (onEnd) {
                 c.onEnd(async (res) => {
-                    if (res == grpc.Code.Unknown && params.retryInterval && params.retryLimit > 0 && retryCount < params.retryLimit) {
+                    if ((res == grpc.Code.Unknown || res == grpc.Code.Unavailable) && params.retryInterval && params.retryLimit > 0 && retryCount < params.retryLimit) {
                         debug('failed to get process request error=%o retry count=%o', res, retryCount);
                         await (new Promise(resolve => setTimeout(resolve, params.retryInterval)));
                         retryCount++;

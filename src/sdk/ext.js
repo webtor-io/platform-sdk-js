@@ -15,17 +15,18 @@ export default function(params, sdk) {
             url.set('query', query);
             return url;
         },
-        async streamSubtitleUrl(extUrl, viewSettings = {}, metadata = {}, params = {}) {
+        async streamSubtitleUrl(extUrl, metadata = {}, params = {}) {
             const url = await this.url(extUrl, metadata, params);
-            return self.sdk.util.streamSubtitleUrl(url, viewSettings);
+            return self.sdk.util.streamSubtitleUrl(url);
         },
-        async streamUrl(extUrl, viewSettings = {}, metadata = {}, params = {}) {
+        async streamUrl(extUrl, metadata = {}, params = {}) {
+            params = Object.assign({}, this.params, params);
             let url = await this.url(extUrl, metadata, params);
-            return self.sdk.util.streamUrl(url, viewSettings);
+            return self.sdk.util.streamUrl(url, metadata, params);
         },
-        async mediaInfo(extUrl, viewSettings = {}, metadata = {}, params = {}) {
+        async mediaInfo(extUrl, metadata = {}, params = {}) {
             const url = await this.url(extUrl, metadata, params);
-            return await self.sdk.util.mediaInfo(url, viewSettings);
+            return await self.sdk.util.mediaInfo(url);
         },
         async openSubtitles(extUrl, metadata = {}, params = {}) {
             const url = await this.url(extUrl, metadata, params);

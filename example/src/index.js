@@ -9,7 +9,7 @@ async function main() {
     document.body.appendChild(status);
 
     const sdk = webtor({
-        apiUrl: 'http://192.168.64.5:32306', // you should change this
+        apiUrl: 'http://127.0.0.1:32476', // you should change this
     });
 
     const magnetUri = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10';

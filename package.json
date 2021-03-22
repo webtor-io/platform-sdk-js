@@ -1,6 +1,6 @@
 {
   "name": "@webtor/platform-sdk-js",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "SDK for online torrent streaming",
   "main": "src/index.js",
   "repository": {
@@ -43,6 +43,7 @@
     "google-protobuf": "^3.11.2",
     "iso-639-1": "^2.1.0",
     "lodash": "^4.17.15",
+    "md5": "^2.3.0",
     "mime": "^2.4.4",
     "parse-torrent": "^7.0.1",
     "path-parse": "^1.0.6",
