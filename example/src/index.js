@@ -1,4 +1,7 @@
 import webtor from '@webtor/platform-sdk-js';
+import 'video.js/dist/video-js.css';
+import videojs from 'video.js';
+const parseTorrent = require('parse-torrent');
 
 async function main() {
     const status = document.createElement('div');
@@ -14,7 +17,13 @@ async function main() {
 
     const magnetUri = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10';
 
-    const torrent = await sdk.magnet.fetchTorrent(magnetUri);
+    let torrent = parseTorrent(magnetUri);
+
+    torrent = await sdk.torrent.pull(torrent.infoHash);
+
+    if (!torrent) {
+        torrent = await sdk.magnet.fetchTorrent(magnetUri);
+    }
 
     const expire = 60*60*24;
 
@@ -25,6 +34,12 @@ async function main() {
     const filePath = torrent.files[5].path;
 
     const url = await seeder.streamUrl(filePath);
+
+    const v = videojs("webtor");
+    v.src({
+        type: 'video/mp4',
+        src: url.toString(),
+    });
 
     link.setAttribute('href', url.toString());
     link.innerHTML = filePath;

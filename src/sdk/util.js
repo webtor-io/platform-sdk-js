@@ -332,7 +332,7 @@ export default function(params, sdk) {
         async subdomainUrl(url, metadata = {}, params = {}, context = {}) {
             url = this.cloneUrl(url);
             params = Object.assign({}, self.params, params);
-            if (!params.useSubdomains || !params.subdomains) {
+            if (!params.subdomains) {
                 return url;
             }
             try {

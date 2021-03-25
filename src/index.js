@@ -13,6 +13,11 @@ const defaultParams = {
     retryLimit: 3,
     cache: false,
     vod: false,
+    pools: {
+        cache: [],
+        worker: [],
+    },
+    subdomains: false,
     async getToken() {
         return null;
     },

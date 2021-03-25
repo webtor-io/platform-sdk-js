@@ -21,16 +21,17 @@ class WebSeeder {
         const query = await this.sdk.util.makeQuery(metadata, params);
         url.set('query', query);
 
-        if (params.cache) {
+        if (params.subdomains) {
             url = await this.sdk.util.cacheUrl(url, metadata, params);
             const cached = await this.sdk.util.isCached(url, metadata, params);
-            const pool = cached ? 'cache,core,worker' : 'worker';
-            const subdomainUrl = await this.sdk.util.subdomainUrl(url, {
+            const pool = cached ? params.pools.cache : params.pools.worker;
+            const m = {
                 infohash: this.infoHash,
-                pool,
                 "use-bandwidth": cached,
-                // "use-cpu": cached
-            }, params, context);
+                "use-cpu": !cached,
+                pool: pool.join(','),
+            }
+            const subdomainUrl = await this.sdk.util.subdomainUrl(url, m, params, context);
             if (subdomainUrl) {
                 return subdomainUrl;
             }
