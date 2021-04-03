@@ -15,7 +15,8 @@ const defaultParams = {
     vod: false,
     pools: {
         cache: [],
-        worker: [],
+        seeder: [],
+        transcoder: [],
     },
     subdomains: false,
     async getToken() {

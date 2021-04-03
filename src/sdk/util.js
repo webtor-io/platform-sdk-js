@@ -211,12 +211,21 @@ export default function(params, sdk) {
             return pieces;
         },
 
-        async mediaInfo(url) {
+        async mediaInfo(url, metadata = {}, params = {}) {
             url = this.cloneUrl(url);
             const deliveryType = this.getDeliveryType(url.pathname);
             const mediaType = this.getMediaType(url.pathname);
             if (deliveryType == 'webseed' || mediaType == 'subtitle') return {};
-            url = this.hlsUrl(url, 'index.json');
+            if (params.cache) {
+                const done = await this.throttledTranscodeDoneMarker(url, metadata, params);
+                if (done) {
+                    url = this.trcUrl(url, 'index.json');
+                } else {
+                    url = this.hlsUrl(url, 'index.json');
+                }
+            } else {
+                url = this.hlsUrl(url, 'index.json');
+            }
             const res = await(retryFetch(url));
             const mediaInfo = await res.json();
             return mediaInfo;
@@ -280,8 +289,9 @@ export default function(params, sdk) {
             }
             return false;
         },
-        async throttled(func, interval, url, file, metadata, params) {
-            const key = url.infoHash + file + func.name;
+        async throttled(func, interval, url, file, metadata, params, k) {
+            let key = url.infoHash + file + func.name;
+            if (k) key += k;
             if (!throttledFuncs[key]) {
                 throttledFuncs[key] = _.throttle(_.bind(func, this), interval, {
                     trailing: false,
@@ -339,7 +349,7 @@ export default function(params, sdk) {
                 const cached = await this.isCached(url, metadata, params);
                 const subdomains = await this.throttled(this.subdomains, 30*1000, url, null, Object.assign({}, metadata, {
                     'skip-active-job-search': cached,
-                }), params);
+                }), params, metadata.pool);
                 if (!context.usedSubdomains) context.usedSubdomains = [];
                 const sub = subdomains.filter(e => !context.usedSubdomains.includes(e));
                 if (sub.length > 0) {

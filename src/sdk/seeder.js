@@ -24,7 +24,9 @@ class WebSeeder {
         if (params.subdomains) {
             url = await this.sdk.util.cacheUrl(url, metadata, params);
             const cached = await this.sdk.util.isCached(url, metadata, params);
-            const pool = cached ? params.pools.cache : params.pools.worker;
+            const deliveryType = this.sdk.util.getDeliveryType(url.pathname);
+            let pool = deliveryType == 'transcode' ? params.pools.transcoder : params.pools.seeder;
+            pool = cached ? params.pools.cache : pool;
             const m = {
                 infohash: this.infoHash,
                 "use-bandwidth": cached,
@@ -40,7 +42,7 @@ class WebSeeder {
     }
 
     async urlPostProcess(url, metadata, params) {
-        const cp = await this.completedPieces(url, metadata, params);
+        const cp = await this.completedPieces(metadata, params);
         if (cp.length == 0) {
             return url;
         }
@@ -73,14 +75,22 @@ class WebSeeder {
     }
 
     async mediaInfo(path, metadata = {}, params = {}) {
+        params = Object.assign({}, this.params, params);
         const url = await this.url(path, metadata, params);
-        return await this.sdk.util.mediaInfo(url);
+        return await this.sdk.util.mediaInfo(url, metadata, params);
     }
 
     async completedPieces(metadata = {}, params = {}) {
         params = Object.assign({}, this.params, params);
         const url = await this.url('', metadata, params);
         return await this.sdk.util.throttledCompletedPieces(url, metadata, params);
+    }
+
+    async isCached(path, metadata = {}, params = {}) {
+        params = Object.assign({}, this.params, params);
+        const url = await this.url(path, metadata, params);
+        const cached = await this.sdk.util.isCached(url, metadata, params);
+        return cached;
     }
 
     async openSubtitles(path, metadata = {}, params = {}) {

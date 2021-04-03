@@ -1,25 +1,40 @@
 import webtor from '@webtor/platform-sdk-js';
 import 'video.js/dist/video-js.css';
 import videojs from 'video.js';
+// import hls from 'videojs-contrib-hls';
 const parseTorrent = require('parse-torrent');
 
 async function main() {
-    const status = document.createElement('div');
-    const link = document.createElement('a');
+    const links = document.querySelectorAll('a[data-magnet]');
+    for (const l of links) {
+        l.addEventListener('click', function (e) {
+            const m = e.target.getAttribute('data-magnet');
+            run(m);
+            e.preventDefault();
+            return false;
+        });
+    }
+}
+
+async function run(magnetUri) {
+    const link = document.querySelector('#download');
     link.setAttribute('target', '_blank');
     link.innerHTML = 'loading...';
-    document.body.appendChild(link);
-    document.body.appendChild(status);
+    const status = document.querySelector('#status')
+    status.innerHTML = '';
 
     const sdk = webtor({
         apiUrl: 'http://127.0.0.1:32476', // you should change this
     });
 
-    const magnetUri = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10';
-
     let torrent = parseTorrent(magnetUri);
 
-    torrent = await sdk.torrent.pull(torrent.infoHash);
+    try {
+        torrent = await sdk.torrent.pull(torrent.infoHash);
+    } catch (e) {
+        console.log(e);
+        torrent = null;
+    }
 
     if (!torrent) {
         torrent = await sdk.magnet.fetchTorrent(magnetUri);
@@ -31,13 +46,18 @@ async function main() {
 
     const seeder = sdk.seeder.get(torrent.infoHash);
 
-    const filePath = torrent.files[5].path;
+    let filePath = null;
+
+    for (const f of torrent.files) {
+        if (sdk.util.getMediaType(f.path) == 'video') {
+            filePath = f.path;
+        }
+    }
 
     const url = await seeder.streamUrl(filePath);
 
     const v = videojs("webtor");
     v.src({
-        type: 'video/mp4',
         src: url.toString(),
     });
 
