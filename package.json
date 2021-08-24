@@ -1,8 +1,8 @@
 {
   "name": "@webtor/platform-sdk-js",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "SDK for online torrent streaming",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/webtor-io/platform-sdk-js"
@@ -13,9 +13,6 @@
     "watch": "webpack --watch",
     "protoc": "ls proto/ | xargs -I{} protoc --plugin='protoc-gen-ts=./node_modules/.bin/protoc-gen-ts' --js_out='import_style=commonjs_strict,binary:.' --ts_out='service=grpc-web:.' ./proto/{}/{}.proto"
   },
-  "files": [
-    "dist/"
-  ],
   "keywords": [
     "webtor",
     "torrent",

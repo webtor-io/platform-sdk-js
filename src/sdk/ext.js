@@ -7,7 +7,12 @@ export default function(params, sdk) {
         async url(extUrl, metadata = {}, params = {}) {
             params = Object.assign(self.params, params);
             const url = new Url(params.apiUrl);
-            const fileName = pathParse(extUrl).base;
+            let fileName = "";
+            if (params.fileName) {
+                fileName = params.fileName;
+            } else {
+                fileName = pathParse(extUrl).base;
+            }
             const encodedUrl = encodeURIComponent(btoa(extUrl));
             const pathname = '/ext/' + encodedUrl + '/' + fileName;
             url.set('pathname', pathname);

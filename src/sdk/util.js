@@ -101,7 +101,7 @@ export default function(params, sdk) {
         },
         vttUrl(url) {
             url = this.cloneUrl(url);
-            url.set('pathname', cleanPath(url.pathname + '~vtt/' + encodeURIComponent(path.basename(url.pathname))));
+            url.set('pathname', cleanPath(url.pathname + '~vtt/' + encodeURIComponent(path.basename(url.pathname).replace(/srt$/, 'vtt'))));
             return url;
         },
         completedPiecesUrl(url) {
@@ -151,6 +151,17 @@ export default function(params, sdk) {
             url.set('pathname', cleanPath(url.pathname + '~vi' + path));
             return url;
         },
+        dpUrl(url, file) {
+            url = this.cloneUrl(url);
+            url.set('pathname', cleanPath(url.pathname + '~dp/' + file));
+            return url;
+        },
+        dpStatUrl(url) {
+            url = this.cloneUrl(url);
+            url.set('pathname', '/dp');
+            url.set('query', '');
+            return url;
+        },
         async baseStreamUrl(url, file, metadata, params, context) {
             url = this.cloneUrl(url);
             const deliveryType = this.getDeliveryType(url.pathname);
@@ -177,7 +188,25 @@ export default function(params, sdk) {
         async segmentUrl(url, segment, metadata, params, context) {
             return this.baseStreamUrl(url, segment, metadata, params, context);
         },
-
+        async error(url, metadata, params) {
+            url = this.cloneUrl(url);
+            const deliveryType = this.getDeliveryType(url.pathname);
+            const mediaType = this.getMediaType(url.pathname);
+            if (deliveryType == 'webseed' || mediaType == 'subtitle') return;
+            if (params.cache) {
+                const done = await this.throttledTranscodeDoneMarker(url, metadata, params);
+                if (done) {
+                    return;
+                } else {
+                    url = this.hlsUrl(url, 'error.log');
+                }
+            } else {
+                url = this.hlsUrl(url, 'error.log');
+            }
+            const res = await fetch(url);
+            const err = await res.text();
+            return err;
+        },
         async transcodeDoneMarker(url) {
             url = this.cloneUrl(url);
             url = this.transcodeDoneMarkerUrl(url);
@@ -277,10 +306,10 @@ export default function(params, sdk) {
             }
             return false;
         },
-        cdnUrl(url, params = {}) {
+        cdnUrl(url, metadata = {}, params = {}) {
             url = this.cloneUrl(url);
             params = Object.assign({}, self.params, params);
-            if (params.cdnUrl && this.isCDNAllowed(url.pathname, params)) {
+            if (params.cdn && params.cdnUrl && this.isCDNAllowed(url.pathname, params)) {
                 let cdnUrl = new Url(params.cdnUrl);
                 url.set('hostname', cdnUrl.hostname);
                 url.set('protocol', cdnUrl.protocol);
@@ -346,16 +375,20 @@ export default function(params, sdk) {
                 return url;
             }
             try {
-                const cached = await this.isCached(url, metadata, params);
+                // const cached = await this.isCached(url, metadata, params);
                 const subdomains = await this.throttled(this.subdomains, 30*1000, url, null, Object.assign({}, metadata, {
-                    'skip-active-job-search': cached,
+                    'skip-active-job-search': true,
                 }), params, metadata.pool);
                 if (!context.usedSubdomains) context.usedSubdomains = [];
                 const sub = subdomains.filter(e => !context.usedSubdomains.includes(e));
+                if (sub.length == 0 && subdomains.length > 0) {
+                    throw "no subdomains left";
+                }
                 if (sub.length > 0) {
                     const s = sub[0];
                     url.set('hostname', s + '.' + url.hostname);
                     context.usedSubdomains.push(s);
+                    // console.log(context.usedSubdomains);
                 }
             } catch (e) {
                 debug(e);

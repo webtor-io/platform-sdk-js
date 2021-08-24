@@ -1,6 +1,8 @@
 import stats from './seeder/stats';
+import downloadProgress from './seeder/downloadProgress';
 const debug = require('debug')('webtor:sdk:seeder');
 const Url = require('url-parse');
+var md5 = require('md5');
 
 class WebSeeder {
     constructor(infoHash, params, sdk) {
@@ -9,10 +11,20 @@ class WebSeeder {
         this.sdk = sdk;
     }
 
+    addDownloadId(metadata = {}, path) {
+        if (!metadata['download-id']) {
+            metadata = Object.assign({}, metadata, {
+                'download-id': md5(metadata['user-id'] + this.infoHash + path + Date.now().toString()),
+            });
+        }
+        return metadata;
+    }
+
     async url(path, metadata = {}, params = {}, context = {}) {
         params = Object.assign({}, this.params, params);
         path = path.replace(/^\//, '');
         let url = new Url(params.apiUrl);
+        metadata = this.addDownloadId(metadata, path);
         url.infoHash = this.infoHash;
         url.path = path;
         const pathname = '/' + this.infoHash + '/' + encodeURIComponent(path);
@@ -29,11 +41,12 @@ class WebSeeder {
             pool = cached ? params.pools.cache : pool;
             const m = {
                 infohash: this.infoHash,
-                "use-bandwidth": cached,
-                "use-cpu": !cached,
+                "use-bandwidth": true,
+                // "use-cpu": !cached,
                 pool: pool.join(','),
             }
             const subdomainUrl = await this.sdk.util.subdomainUrl(url, m, params, context);
+            if (subdomainUrl === false) return false;
             if (subdomainUrl) {
                 return subdomainUrl;
             }
@@ -46,7 +59,7 @@ class WebSeeder {
         if (cp.length == 0) {
             return url;
         }
-        const cdnUrl = this.sdk.util.cdnUrl(url);
+        const cdnUrl = this.sdk.util.cdnUrl(url, metadata, params);
         if (cdnUrl) {
             return cdnUrl;
         }
@@ -57,16 +70,23 @@ class WebSeeder {
         params = Object.assign({}, this.params, params);
         let url = await this.url(path, metadata, params, context);
         url = await this.sdk.util.streamUrl(url, metadata, params, context);
-        url = await this.urlPostProcess(url);
+        url = await this.urlPostProcess(url, metadata, params);
         return url;
     }
 
     async segmentUrl(path, segment, metadata = {}, params = {}, context = {}) {
         params = Object.assign({}, this.params, params);
         let url = await this.url(path, metadata, params, context);
+        if (url === false) return false;
         url = await this.sdk.util.segmentUrl(url, segment, metadata, params, context);
-        url = await this.urlPostProcess(url);
+        url = await this.urlPostProcess(url, metadata, params);
         return url;
+    }
+
+    async error(path, metadata = {}, params = {}, context = {}) {
+        params = Object.assign({}, this.params, params);
+        let url = await this.url(path, metadata, params, context);
+        return await this.sdk.util.error(url, metadata, params);
     }
 
     async pieceUrl(id, metadata = {}, params = {}) {
@@ -105,7 +125,18 @@ class WebSeeder {
         }
         metadata.download = true;
         let url = await this.url(path, metadata, params, context);
-        url = await this.urlPostProcess(url);
+        url = await this.urlPostProcess(url, metadata, params);
+        return url;
+    }
+
+    async downloadUrlWithProgress(path, onMessage, onEnd, metadata = {}, params = {}, context = {}) {
+        params = Object.assign({}, this.params, params, {cdn: false});
+        metadata = this.addDownloadId(metadata, path);
+        const downloadUrl = await this.downloadUrl(path, metadata, params, context);
+        const fileName = path.split('/').pop();
+        const url = this.sdk.util.dpUrl(downloadUrl, fileName);
+        const statUrl = this.sdk.util.dpStatUrl(downloadUrl);
+        downloadProgress(statUrl, path, onMessage, onEnd, metadata, params); 
         return url;
     }
 
@@ -117,6 +148,16 @@ class WebSeeder {
         const fileName = path.split('/').pop();
         let url = await this.url(path, metadata, params, context);
         url.set('pathname', url.pathname + '~arch/' + fileName + '.zip');
+        return url;
+    }
+    async zipUrlWithProgress(path, onMessage, onEnd, metadata = {}, params = {}, context = {}) {
+        params = Object.assign({}, this.params, params, {cdn: false});
+        metadata = this.addDownloadId(metadata, path);
+        const zipUrl = await this.zipUrl(path, metadata, params, context);
+        const fileName = path.split('/').pop() + '.zip';
+        const url = this.sdk.util.dpUrl(zipUrl, fileName);
+        const statUrl = this.sdk.util.dpStatUrl(zipUrl);
+        downloadProgress(statUrl, path, onMessage, onEnd, metadata, params); 
         return url;
     }
 

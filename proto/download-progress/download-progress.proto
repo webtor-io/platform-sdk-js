@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option go_package = "github.com/webtor-io/download-progress;download_progress";
+
+service DownloadProgress {
+  // Get download stat
+  rpc Stat (StatRequest) returns (StatReply) {}
+  // Get download stat stream
+  rpc StatStream (StatRequest) returns (stream StatReply) {}
+}
+
+// Stat request message
+message StatRequest {
+}
+
+// Stat response message
+message StatReply {
+  enum Status {
+    NOT_STARTED = 0;
+    PENDING     = 1;
+    ACTIVE      = 2;
+    DONE        = 3;
+    FAILED      = 4;
+  }
+  Status status    = 1;
+  int64 downloaded = 2;
+  int64 rate       = 3;
+  int64 length     = 4;
+}
