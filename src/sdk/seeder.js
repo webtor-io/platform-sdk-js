@@ -36,17 +36,21 @@ class WebSeeder {
         if (params.subdomains) {
             url = await this.sdk.util.cacheUrl(url, metadata, params);
             const cached = await this.sdk.util.isCached(url, metadata, params);
+            const completedPieces = await this.sdk.util.throttledCompletedPieces(url, metadata, params);
+            const pieceCache = completedPieces.length > 0;
             const deliveryType = this.sdk.util.getDeliveryType(url.pathname);
             let pool = deliveryType == 'transcode' ? params.pools.transcoder : params.pools.seeder;
-            pool = cached ? params.pools.cache : pool;
+            pool = pieceCache || cached ? params.pools.cache : pool;
             const m = {
                 infohash: this.infoHash,
-                "use-bandwidth": true,
-                // "use-cpu": !cached,
+                "use-bandwidth": cached,
+                "use-cpu": !cached,
+                "skip-active-job-search": cached,
                 pool: pool.join(','),
             }
-            const subdomainUrl = await this.sdk.util.subdomainUrl(url, m, params, context);
+            const subdomainUrl = await this.sdk.util.subdomainUrl(url, context, m, params);
             if (subdomainUrl === false) return false;
+            subdomainUrl.primaryHost = url.host;
             if (subdomainUrl) {
                 return subdomainUrl;
             }
@@ -74,7 +78,7 @@ class WebSeeder {
         return url;
     }
 
-    async segmentUrl(path, segment, metadata = {}, params = {}, context = {}) {
+    async segmentUrl(path, segment, context = {}, metadata = {}, params = {}) {
         params = Object.assign({}, this.params, params);
         let url = await this.url(path, metadata, params, context);
         if (url === false) return false;

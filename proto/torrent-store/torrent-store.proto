@@ -7,9 +7,6 @@ service TorrentStore {
   // Pulls torrent from the store
   rpc Pull (PullRequest) returns (PullReply) {}
 
-  // Check torrent in the store for existence
-  rpc Check (CheckRequest) returns (CheckReply) {}
-
   // Touch torrent in the store
   rpc Touch (TouchRequest) returns (TouchReply) {}
 }
@@ -22,7 +19,7 @@ message PushReply {
 // The push request message containing the torrent and expire duration is seconds
 message PushRequest {
   bytes torrent = 1;
-  int32 expire  = 2;
+  int32 expire  = 2 [deprecated=true];
 }
 
 // The pull request message containing the infoHash
@@ -52,5 +49,5 @@ message TouchReply {
 // The touch request message containing the torrent and expire duration is seconds
 message TouchRequest {
   string infoHash = 1;
-  int32  expire   = 2;
+  int32 expire    = 2 [deprecated=true];
 }

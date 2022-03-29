@@ -22,15 +22,6 @@ type TorrentStorePull = {
   readonly responseType: typeof proto_torrent_store_torrent_store_pb.PullReply;
 };
 
-type TorrentStoreCheck = {
-  readonly methodName: string;
-  readonly service: typeof TorrentStore;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_torrent_store_torrent_store_pb.CheckRequest;
-  readonly responseType: typeof proto_torrent_store_torrent_store_pb.CheckReply;
-};
-
 type TorrentStoreTouch = {
   readonly methodName: string;
   readonly service: typeof TorrentStore;
@@ -44,7 +35,6 @@ export class TorrentStore {
   static readonly serviceName: string;
   static readonly Push: TorrentStorePush;
   static readonly Pull: TorrentStorePull;
-  static readonly Check: TorrentStoreCheck;
   static readonly Touch: TorrentStoreTouch;
 }
 
@@ -97,15 +87,6 @@ export class TorrentStoreClient {
   pull(
     requestMessage: proto_torrent_store_torrent_store_pb.PullRequest,
     callback: (error: ServiceError|null, responseMessage: proto_torrent_store_torrent_store_pb.PullReply|null) => void
-  ): UnaryResponse;
-  check(
-    requestMessage: proto_torrent_store_torrent_store_pb.CheckRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_torrent_store_torrent_store_pb.CheckReply|null) => void
-  ): UnaryResponse;
-  check(
-    requestMessage: proto_torrent_store_torrent_store_pb.CheckRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_torrent_store_torrent_store_pb.CheckReply|null) => void
   ): UnaryResponse;
   touch(
     requestMessage: proto_torrent_store_torrent_store_pb.TouchRequest,

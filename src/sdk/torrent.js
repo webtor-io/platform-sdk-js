@@ -1,5 +1,5 @@
 import {TorrentStore} from '../../proto/torrent-store/torrent-store_pb_service';
-import {PullRequest, PushRequest, TouchRequest, CheckRequest} from '../../proto/torrent-store/torrent-store_pb';
+import {PullRequest, PushRequest, TouchRequest} from '../../proto/torrent-store/torrent-store_pb';
 import {grpc} from '@improbable-eng/grpc-web';
 import process from './process';
 import parseTorrent from 'parse-torrent';
@@ -31,7 +31,7 @@ export default function(params = {}) {
         },
         pull(infoHash, metadata = {}, params = {}) {
             params = Object.assign(self.params, params);
-            const url = params.apiUrl + '/store';
+            const url = params.apiUrl + params.endpoints.torrent;
             debug('pull torrent infoHash=%s url=%s metadata=%o', infoHash, url, metadata);
             const request = new PullRequest();
             request.setInfohash(infoHash);
@@ -60,11 +60,10 @@ export default function(params = {}) {
         },
         push(torrent, expire, metadata = {}, params = {}) {
             params = Object.assign(self.params, params);
-            const url = params.apiUrl + '/store';
+            const url = params.apiUrl + params.endpoints.torrent;
             debug('push torrent url=%s metadata=%o', url, metadata);
             const request = new PushRequest();
             request.setTorrent(parseTorrent.toTorrentFile(torrent));
-            request.setExpire(expire);
             const client = () => grpc.client(TorrentStore.Push, {
                 host:  url,
                 // transport: grpc.WebsocketTransport(),
@@ -85,38 +84,12 @@ export default function(params = {}) {
             }
             return process(client, request, null, onEnd, metadata, params);
         },
-        check(infoHash, metadata = {}, params = {}) {
-            params = Object.assign(self.params, params);
-            const url = params.apiUrl + '/store';
-            debug('check torrent url=%s metadata=%o', url, metadata);
-            const request = new CheckRequest();
-            request.setInfohash(infoHash);
-            const client = () => grpc.client(TorrentStore.Check, {
-                host: url,
-                // transport: grpc.WebsocketTransport(),
-                debug: params.grpcDebug,
-            });
-            const onMessage = (message, resolve, reject) => {
-                const exists = message.exists;
-                debug('and finally torrent exists=%o', exists);
-                resolve(exists);
-            }
-            const onEnd = (res, resolve, reject) => {
-                if (res === grpc.Code.PermissionDenied) {
-                    reject('abused');
-                } else if (res !== grpc.Code.OK) {
-                    reject('failed to check torrent code=' + res);
-                }
-            }
-            return process(client, request, onMessage, onEnd, metadata, params);
-        },
         touch(torrent, expire, metadata = {}, params = {}) {
             params = Object.assign(self.params, params);
-            const url = params.apiUrl + '/store';
+            const url = params.apiUrl + params.endpoints.torrent;
             debug('touch torrent url=%s metadata=%o', url, metadata);
             const request = new TouchRequest();
             request.setInfohash(torrent.infoHash);
-            request.setExpire(expire);
             const client = () => grpc.client(TorrentStore.Touch, {
                 host: url,
                 // transport: grpc.WebsocketTransport(),

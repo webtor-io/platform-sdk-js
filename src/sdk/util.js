@@ -2,10 +2,10 @@ const path = require('path');
 const Url = require('url-parse');
 import ISO6391 from 'iso-639-1';
 import mime from 'mime';
-import { readSync } from 'fs';
 var md5 = require('md5');
-// const _ = require('lodash')
 const debug = require('debug')('webtor:sdk:util');
+import bind from 'lodash/bind';
+import throttle from 'lodash/throttle';
 const debugFetch = function(url) {
     debug('fetch url=%o', url.href);
     return fetch(url);
@@ -57,8 +57,7 @@ export default function(params, sdk) {
             // Browser supported image formats
             if ('.png .gif .jpg .jpeg'.split(' ').includes(ext)) return 'webseed';
             // Browser unsupported subtitle formats
-            if ('.vtt'.split(' ').includes(ext)) return 'webseed';
-            if ('.srt'.split(' ').includes(ext)) return 'transcode';
+            if ('.vtt .srt'.split(' ').includes(ext)) return 'webseed';
         },
         getMediaType(file) {
             if (!file) return;
@@ -73,8 +72,11 @@ export default function(params, sdk) {
             // Subtitles
             if ('.srt .vtt'.split(' ').includes(ext)) return 'subtitle';
         },
-        getMimeType(url) {
-            const ext = path.extname(url.pathname);
+        getMimeType(file) {
+            if (typeof file == 'object') {
+                file = file.pathname;
+            }
+            const ext = path.extname(file);
             return mime.getType(ext);
         },
         getSubtitleSrcLang(name) {
@@ -104,6 +106,14 @@ export default function(params, sdk) {
             url.set('pathname', cleanPath(url.pathname + '~vtt/' + encodeURIComponent(path.basename(url.pathname).replace(/srt$/, 'vtt'))));
             return url;
         },
+        primaryUrl(url) {
+            if (!url) return url;
+            url = this.cloneUrl(url);
+            if (url.primaryHost) {
+                url.host = url.primaryHost;
+            }
+            return url;
+        },
         completedPiecesUrl(url) {
             url = this.cloneUrl(url);
             url = this.tcUrl(url);
@@ -112,12 +122,24 @@ export default function(params, sdk) {
         },
         transcodeDoneMarkerUrl(url) {
             url = this.cloneUrl(url);
+            url = this.primaryUrl(url);
             url.set('pathname', cleanPath(url.pathname + '~trc/done'));
+            return url;
+        },
+        multibitrateDoneMarkerUrl(url) {
+            url = this.cloneUrl(url);
+            url = this.primaryUrl(url);
+            url.set('pathname', cleanPath(url.pathname + '~mtrc/done'));
             return url;
         },
         transcodeIndexUrl(url) {
             url = this.cloneUrl(url);
             url.set('pathname', cleanPath(url.pathname + '~trc/index.m3u8'));
+            return url;
+        },
+        multibitrateIndexUrl(url) {
+            url = this.cloneUrl(url);
+            url.set('pathname', cleanPath(url.pathname + '~mtrc/index.m3u8'));
             return url;
         },
         pieceUrl(url, id) {
@@ -139,6 +161,11 @@ export default function(params, sdk) {
         trcUrl(url, file) {
             url = this.cloneUrl(url);
             url.set('pathname', cleanPath(url.pathname + '~trc/' + file));
+            return url;
+        },
+        mtrcUrl(url, file) {
+            url = this.cloneUrl(url);
+            url.set('pathname', cleanPath(url.pathname + '~mtrc/' + file));
             return url;
         },
         vodUrl(url, file) {
@@ -165,16 +192,31 @@ export default function(params, sdk) {
         async baseStreamUrl(url, file, metadata, params, context) {
             url = this.cloneUrl(url);
             const deliveryType = this.getDeliveryType(url.pathname);
-            const mediaType = this.getMediaType(url.pathname);
             if (params.vod && cleanExt(path.extname(url.pathname)) == '.mp4') {
+                if (params.multibitrate) {
+                    const done = await this.throttledMultibitrateDoneMarker(url, metadata, params);
+                    if (done) {
+                        url.multibitrate = true;
+                        url.cached = true;
+                        return this.mtrcUrl(url, file);
+                    }
+                }
                 return this.vodUrl(url, file);
+            } else if (cleanExt(path.extname(url.pathname)) == '.srt') {
+                return this.vttUrl(url);
             } else if (deliveryType == 'transcode') {
-                if (mediaType == 'subtitle') {
-                    return this.vttUrl(url)
+                if (params.multibitrate) {
+                    const done = await this.throttledMultibitrateDoneMarker(url, metadata, params);
+                    if (done) {
+                        url.multibitrate = true;
+                        url.cached = true;
+                        return this.mtrcUrl(url, file);
+                    }
                 }
                 if (params.cache) {
                     const done = await this.throttledTranscodeDoneMarker(url, metadata, params);
                     if (done) {
+                        url.cached = true;
                         return this.trcUrl(url, file);
                     }
                 }
@@ -213,10 +255,23 @@ export default function(params, sdk) {
             const res = await(retryFetch(url));
             return res.status == 200;
         },
+        async multibitrateDoneMarker(url) {
+            url = this.cloneUrl(url);
+            url = this.multibitrateDoneMarkerUrl(url);
+            const res = await(retryFetch(url));
+            return res.status == 200;
+        },
 
         async transcodeIndexExists(url) {
             url = this.cloneUrl(url);
             url = this.transcodeIndexUrl(url);
+            const res = await(retryFetch(url));
+            return res.status == 200;
+        },
+
+        async multibitrateIndexExists(url) {
+            url = this.cloneUrl(url);
+            url = this.multibitrateIndexUrl(url);
             const res = await(retryFetch(url));
             return res.status == 200;
         },
@@ -291,7 +346,7 @@ export default function(params, sdk) {
         async subdomains(u, path, metadata = {}, params = {}) {
             params = Object.assign({}, self.params, params);
             const url = await this.subdomainsUrl(metadata, params);
-            const res = await(debugFetch(url));
+            const res = await(retryFetch(url));
             const s = await res.json();
             const rr = [];
             for (const e of s) {
@@ -322,12 +377,12 @@ export default function(params, sdk) {
             let key = url.infoHash + file + func.name;
             if (k) key += k;
             if (!throttledFuncs[key]) {
-                throttledFuncs[key] = _.throttle(_.bind(func, this), interval, {
+                throttledFuncs[key] = throttle(bind(func, this, url, file, metadata, params), interval, {
                     trailing: false,
                 });
             }
             const tf = throttledFuncs[key];
-            return await tf(url, file, metadata, params);
+            return await tf();
         },
         async cacheUrl(url, metadata, params) {
             const completedPieces = await this.throttledCompletedPieces(url, metadata, params);
@@ -358,17 +413,36 @@ export default function(params, sdk) {
             }
             return done;
         },
+        async throttledMultibitrateDoneMarker(url, metadata = {}, params = {}) {
+            let done = false;
+            if (params.cache) {
+                done = await this.throttled(this.multibitrateDoneMarker, 10*60*1000, url, url.path, metadata, params);
+            }
+            return done;
+        },
+        async throttledMultibitrateIndexExists(url, metadata = {}, params = {}) {
+            let done = false;
+            if (params.cache) {
+                done = await this.throttled(this.multibitrateIndexExists, 10*60*1000, url, url.path, metadata, params);
+            }
+            return done;
+        },
         async isCached(url, metadata = {}, params = {}) {
-            const completedPieces = await this.throttledCompletedPieces(url, metadata, params);
-            let cached = completedPieces.length > 0;
             const deliveryType = this.getDeliveryType(url.pathname);
             const mediaType = this.getMediaType(url.pathname);
-            if (mediaType != 'subtitle' && deliveryType == 'transcode') {
-                cached = await this.throttledTranscodeDoneMarker(url, metadata, params);
+            if (deliveryType == 'webseed') {
+                const completedPieces = await this.throttledCompletedPieces(url, metadata, params);
+                return completedPieces.length > 0;
             }
-            return cached;
+            if (mediaType == 'video') {
+                if (await this.throttledMultibitrateDoneMarker(url, metadata, params)) return true;
+            }
+            if (deliveryType == 'transcode') {
+                if (await this.throttledTranscodeDoneMarker(url, metadata, params)) return true;
+            }
+            return false;
         },
-        async subdomainUrl(url, metadata = {}, params = {}, context = {}) {
+        async subdomainUrl(url, context = {}, metadata = {}, params = {}) {
             url = this.cloneUrl(url);
             params = Object.assign({}, self.params, params);
             if (!params.subdomains) {
@@ -376,19 +450,17 @@ export default function(params, sdk) {
             }
             try {
                 // const cached = await this.isCached(url, metadata, params);
-                const subdomains = await this.throttled(this.subdomains, 30*1000, url, null, Object.assign({}, metadata, {
-                    'skip-active-job-search': true,
-                }), params, metadata.pool);
+                const subdomains = await this.throttled(this.subdomains, 30*1000, url, null, metadata, params, metadata.pool);
                 if (!context.usedSubdomains) context.usedSubdomains = [];
-                const sub = subdomains.filter(e => !context.usedSubdomains.includes(e));
+                let sub = subdomains.filter(e => !context.usedSubdomains.includes(e));
                 if (sub.length == 0 && subdomains.length > 0) {
-                    throw "no subdomains left";
+                    sub = [subdomains[0]];
+                    context.usedSubdomains = [];
                 }
-                if (sub.length > 0) {
+                if (sub.length !== 0) {
                     const s = sub[0];
                     url.set('hostname', s + '.' + url.hostname);
                     context.usedSubdomains.push(s);
-                    // console.log(context.usedSubdomains);
                 }
             } catch (e) {
                 debug(e);

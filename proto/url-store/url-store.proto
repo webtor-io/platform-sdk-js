@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package webtor.url_store;
+option go_package = "github.com/webtor-io/url-store;url_store";
+
+service UrlStore {
+  // Pushes url to the store
+  rpc Push (PushRequest) returns (PushReply) {}
+
+  // Check url existence in the store
+  rpc Check (CheckRequest) returns (CheckReply) {}
+}
+
+// The push response message
+message PushReply {
+  string hash = 1;
+}
+
+// The push request message
+message PushRequest {
+  string url  = 1;
+}
+
+// The check request message containing the infoHash
+message CheckRequest {
+  string hash = 1;
+}
+
+// The check response message containing existance flag
+message CheckReply {
+  bool   exists = 1;
+}

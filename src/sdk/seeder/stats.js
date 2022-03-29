@@ -3,7 +3,7 @@ import {StatRequest, StatReply} from '../../../proto/torrent-web-seeder/torrent-
 import {grpc} from '@improbable-eng/grpc-web';
 import process from '../process';
 const debug = require('debug')('webtor:sdk:seeder:stats');
-import _ from 'lodash';
+import invert from 'lodash/invert';
 
 class Stats {
     constructor(url, path) {
@@ -30,7 +30,7 @@ class Stats {
             this.client = c;
             return c;
         };
-        const statuses = _.invert(StatReply.Status);
+        const statuses = invert(StatReply.Status);
         let map = null;
         const onMessageWrapper = (message) => {
             message.statusName = statuses[message.status];
