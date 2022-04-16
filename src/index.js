@@ -28,6 +28,7 @@ const defaultParams = {
     endpoints: {
         torrent: '/store'
     },
+    tokenRenewInterval: 60000,
 }
 
 function sdk(params = {}) {

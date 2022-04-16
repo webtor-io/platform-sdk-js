@@ -36,11 +36,12 @@ class WebSeeder {
         if (params.subdomains) {
             url = await this.sdk.util.cacheUrl(url, metadata, params);
             const cached = await this.sdk.util.isCached(url, metadata, params);
-            const completedPieces = await this.sdk.util.throttledCompletedPieces(url, metadata, params);
-            const pieceCache = completedPieces.length > 0;
+            // const completedPieces = await this.sdk.util.throttledCompletedPieces(url, metadata, params);
+            // const pieceCache = completedPieces.length > 0;
             const deliveryType = this.sdk.util.getDeliveryType(url.pathname);
+            if (deliveryType === undefined) return url;
             let pool = deliveryType == 'transcode' ? params.pools.transcoder : params.pools.seeder;
-            pool = pieceCache || cached ? params.pools.cache : pool;
+            pool = cached ? params.pools.cache : pool;
             const m = {
                 infohash: this.infoHash,
                 "use-bandwidth": cached,

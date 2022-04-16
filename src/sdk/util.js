@@ -430,15 +430,15 @@ export default function(params, sdk) {
         async isCached(url, metadata = {}, params = {}) {
             const deliveryType = this.getDeliveryType(url.pathname);
             const mediaType = this.getMediaType(url.pathname);
-            if (deliveryType == 'webseed') {
-                const completedPieces = await this.throttledCompletedPieces(url, metadata, params);
-                return completedPieces.length > 0;
-            }
             if (mediaType == 'video') {
                 if (await this.throttledMultibitrateDoneMarker(url, metadata, params)) return true;
             }
             if (deliveryType == 'transcode') {
                 if (await this.throttledTranscodeDoneMarker(url, metadata, params)) return true;
+            }
+            if (deliveryType == 'webseed') {
+                const completedPieces = await this.throttledCompletedPieces(url, metadata, params);
+                return completedPieces.length > 0;
             }
             return false;
         },
