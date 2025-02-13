@@ -1,5 +1,22 @@
-# platform-sdk-js
-SDK for online torrent streaming
+# ⚠️ [ARCHIVED] Webtor Platform SDK (JS)
+
+This repository is now **archived** and no longer maintained.  
+For continued development and self-hosted solutions, please refer to the **new repository**:
+
+👉 **[Webtor.io Self-Hosted](https://github.com/webtor-io/self-hosted)**
+
+## ❓ What This Means
+- No further updates or maintenance will be provided for this repository.
+- We recommend **migrating** to the **self-hosted** Webtor.io solution.
+- Issues and feature requests will no longer be addressed here.
+
+## 🔗 Migration Guide
+To set up and use Webtor.io in a self-hosted environment, visit:  
+📌 **[Webtor.io Self-Hosted Documentation](https://github.com/webtor-io/self-hosted)**
+
+---
+
+Thank you for your support and contributions! 🚀
 
 ## Features
 1. Online torrent content streaming without waiting for full download
